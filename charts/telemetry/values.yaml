@@ -1,0 +1,108 @@
+substrate-telemetry:
+  image:
+    backend:
+      repository: parity/substrate-telemetry-backend
+      pullPolicy: Always
+      tag: latest
+    frontend:
+      repository: parity/substrate-telemetry-frontend
+      pullPolicy: Always
+      tag: latest
+
+  replicaCount:
+    shard: 1
+    core: 1
+    frontend: 1
+  extraArgs:
+    core:
+      - --expose-node-details
+  envVars:
+    frontend:
+      SUBSTRATE_TELEMETRY_URL: wss://feed.telemetry.example.com/feed
+    core:
+      NODE_OPTIONS: max_third_party_nodes=10000
+  ingress:
+    shard:
+      enabled: true
+      rules:
+        - host: submit.telemetry.example.com
+          http:
+            paths:
+            - backend:
+                service:
+                  name: telemetry-shard
+                  port:
+                    number: 80
+              path: /submit
+              pathType: Exact
+            - backend:
+                service:
+                  name: telemetry-shard
+                  port:
+                    number: 80
+              path: /submit/
+              pathType: Exact
+    core:
+      enabled: true
+      rules:
+        - host: feed.telemetry.example.com
+          http:
+            paths:
+            - backend:
+                service:
+                  name: telemetry-core
+                  port:
+                    number: 80
+              path: /feed
+              pathType: Exact
+            - backend:
+                service:
+                  name: telemetry-core
+                  port:
+                    number: 80
+              path: /feed/
+              pathType: Exact
+      tls:
+        - secretName: feed.telemetry.example.com
+          hosts:
+            - feed.telemetry.example.com
+    frontend:
+      enabled: true
+      rules:
+        - host: telemetry.example.com
+          http:
+            paths:
+            - backend:
+                service:
+                  name: telemetry-frontend
+                  port:
+                    number: 80
+              path: /
+              pathType: Prefix
+            - backend:
+                service:
+                  name: telemetry-shard
+                  port:
+                    number: 80
+              path: /submit
+              pathType: Exact
+            - backend:
+                service:
+                  name: telemetry-shard
+                  port:
+                    number: 80
+              path: /submit/
+              pathType: Exact
+  resources:
+    frontend:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+    shard:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+    core:
+      requests:
+        cpu: 100m
+        memory: 128Mi

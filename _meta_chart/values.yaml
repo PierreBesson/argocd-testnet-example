@@ -1,0 +1,3 @@
+appsets: []
+project: default
+sourceRepoUrl: https://github.com/PierreBesson/argocd-testnet-example.git

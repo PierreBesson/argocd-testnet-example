@@ -1,0 +1,39 @@
+appsets:
+  - name: rococo-testnet-manager
+    namespace: localrococo
+    git:
+      chartPath: charts/testnet-manager
+      valuesFilesPath: localrococo/testnet-manager.yaml
+  - name: rococo-chainspecs
+    namespace: localrococo
+    git:
+      chartPath: charts/chainspecs
+      valuesFilesPath: localrococo/chainspecs.yaml
+  - name: rococo-bootnodes
+    namespace: localrococo
+    git:
+      chartPath: charts/node
+      valuesFilesPath: localrococo/bootnodes/*.yaml
+      commonValuesFiles:
+        - localrococo/relaychain-common.yaml
+  - name: rococo-validators
+    namespace: localrococo
+    git:
+      chartPath: charts/node
+      valuesFilesPath: localrococo/validators/*.yaml
+      commonValuesFiles:
+        - localrococo/relaychain-common.yaml
+  - name: rococo-rpcs
+    namespace: localrococo
+    git:
+      chartPath: charts/node
+      valuesFilesPath: localrococo/rpcs/*
+      commonValuesFiles:
+        - localrococo/relaychain-common.yaml
+  - name: rococo-collators
+    namespace: localrococo
+    git:
+      chartPath: charts/node
+      valuesFilesPath: localrococo/collators/*.yaml
+      commonValuesFiles:
+        - localrococo/parachain-common.yaml

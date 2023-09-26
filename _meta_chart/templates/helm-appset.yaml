@@ -1,0 +1,58 @@
+{{ $project := .Values.project }}
+{{ $sourceRepoUrl := .Values.sourceRepoUrl }}
+{{- range .Values.appsets }}
+{{- if not .disabled }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: {{ .name }}
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - git:
+        repoURL: {{ .git.url | default $sourceRepoUrl }}
+        revision: HEAD
+        files:
+          - path: {{ .git.valuesFilesPath }}
+  template:
+    metadata:
+      name: '{{ "{{" }}.path.filenameNormalized | replace ".yaml" ""{{ "}}" }}'
+      namespace: {{ .namespace }}
+    spec:
+      project: {{ $project }}
+      source:
+        repoURL: {{ .git.url | default $sourceRepoUrl }}
+        targetRevision: HEAD
+        path: {{ .git.chartPath }} # path to chart definition
+        helm:
+          releaseName: '{{ "{{" }}.path.filenameNormalized | replace ".yaml" ""{{ "}}" }}'
+{{/*  https://argo-cd.readthedocs.io/en/stable/operator-manual/applicationset/Generators-Git/#pass-additional-key-value-pairs-via-values-field_1*/}}
+          valueFiles:
+{{/*  We Set common values files before custom ones so that the later have precedence over the former*/}}
+            {{- range .git.commonValuesFiles }}
+            - "/{{ . }}"
+            {{- end }}
+            - "/{{ "{{"  }} .path.path{{ "}}" }}/{{ "{{" }} .path.filename{{ "}}" }}"
+          values:
+            {{- range .values }}
+            - path: {{ . | quote }}
+            {{- end }}
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: {{ .namespace }}
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ApplyOutOfSyncOnly=true
+          - PruneLast=true
+          - FailOnSharedResource=true
+        retry:
+          limit: 3
+{{- end }}
+{{- end }}
